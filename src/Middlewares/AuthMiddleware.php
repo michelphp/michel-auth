@@ -2,9 +2,10 @@
 
 namespace Michel\Auth\Middlewares;
 
-use Michel\Auth\AuthHandlerInterface;
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
+use Michel\Auth\Handler\AuthHandlerInterface;
+use Michel\Auth\Handler\StatefulAuthHandlerInterface;
 use Michel\Auth\Helper\IpHelper;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -50,6 +51,12 @@ final class AuthMiddleware implements MiddlewareInterface
                         'ip'         => IpHelper::getIpFromRequest($request),
                     ]
                 );
+                if ($this->authHandler instanceof StatefulAuthHandlerInterface) {
+                    $response = $this->authHandler->onSuccess($request, $this->responseFactory);
+                    if ($response instanceof ResponseInterface) {
+                        return $response;
+                    }
+                }
             }
             return $handler->handle($request);
         }catch (AuthenticationException $exception) {

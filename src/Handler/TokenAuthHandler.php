@@ -2,7 +2,6 @@
 
 namespace Michel\Auth\Handler;
 
-use Michel\Auth\AuthHandlerInterface;
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
 use Michel\Auth\Exception\InvalidCredentialsException;

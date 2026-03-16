@@ -12,7 +12,6 @@ final class AuthIdentity
         bool          $isNewLogin = false
     )
     {
-
         $this->user = $user;
         $this->isNewLogin = $isNewLogin;
     }

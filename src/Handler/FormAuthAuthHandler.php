@@ -2,7 +2,6 @@
 
 namespace Michel\Auth\Handler;
 
-use Michel\Auth\AuthHandlerInterface;
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
 use Michel\Auth\Exception\InvalidCredentialsException;
@@ -17,7 +16,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class FormAuthHandler implements AuthHandlerInterface
+class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterface
 {
     public const AUTHENTICATION_ERROR = '_form.last_error';
     public const LAST_USERNAME = '_form.last_username';
@@ -27,6 +26,7 @@ class FormAuthHandler implements AuthHandlerInterface
     private string $loginPath;
     private string $loginKey;
     private string $passwordKey;
+    private string $targetPath;
 
     /**
      * @var callable
@@ -46,6 +46,7 @@ class FormAuthHandler implements AuthHandlerInterface
             Option::string('login_path', '/login')->min(1),
             Option::string('login_key', 'login')->min(1),
             Option::string('password_key', 'password')->min(1),
+            Option::string('target_path', '/')->min(1),
             Option::mixed('on_failure')->validator(function ($value) {
                 return is_callable($value) || $value === null;
             })->setOptional(null),
@@ -55,6 +56,7 @@ class FormAuthHandler implements AuthHandlerInterface
         $this->loginPath = '/'.ltrim($options['login_path'], '/');
         $this->loginKey = $options['login_key'];
         $this->passwordKey = $options['password_key'];
+        $this->targetPath = '/'.ltrim($options['target_path'], '/');
         $this->onFailure = $options['on_failure'];
     }
 
@@ -106,12 +108,18 @@ class FormAuthHandler implements AuthHandlerInterface
             throw new AuthenticationException("The resolved user does not support password authentication.");
         }
 
-        if (!$this->userProvider->checkPassword($user, $password)) {
+        if (!$this->userProvider->isPasswordValid($user, $password)) {
             throw new InvalidCredentialsException("Invalid username or password.");
         }
 
         $this->sessionStorage->put('user_identifier', $user->getUserIdentifier());
         return new AuthIdentity($user,  true);
+    }
+
+    public function onSuccess(ServerRequestInterface $request, ResponseFactoryInterface $responseFactory): ?ResponseInterface
+    {
+        $response = $responseFactory->createResponse(302);
+        return $response->withHeader('Location', $this->targetPath);
     }
 
     public function onFailure(ServerRequestInterface $request, ResponseFactoryInterface $responseFactory, ?AuthenticationException $exception = null): ResponseInterface
@@ -138,5 +146,4 @@ class FormAuthHandler implements AuthHandlerInterface
             $pass
         ];
     }
-
 }
