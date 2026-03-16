@@ -33,13 +33,13 @@ Then, create a provider implementing `Michel\Auth\UserProviderInterface` to fetc
 Set up form authentication for your web application.
 
 ```php
-use Michel\Auth\Handler\FormAuthAuthHandler;
+use Michel\Auth\Handler\FormAuthHandler;
 use Michel\Auth\Middlewares\AuthMiddleware;
 
 // $userProvider = new YourUserProvider();
 // $sessionStorage = new YourSessionStorage();
 
-$formHandler = new FormAuthAuthHandler($userProvider, $sessionStorage, [
+$formHandler = new FormAuthHandler($userProvider, $sessionStorage, [
     'login_path' => '/login',
     'login_key' => 'email',
     'password_key' => 'password',

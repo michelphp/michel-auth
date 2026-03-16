@@ -3,7 +3,7 @@
 namespace Michel\Auth\MichelPackage;
 
 use Michel\Auth\Command\AuthPasswordHashCommand;
-use Michel\Auth\Handler\FormAuthAuthHandler;
+use Michel\Auth\Handler\FormAuthHandler;
 use Michel\Auth\Middlewares\AuthMiddleware;
 use Michel\Auth\UserProviderInterface;
 use Michel\Package\PackageInterface;
@@ -20,13 +20,13 @@ class MichelAuthPackage implements PackageInterface
         return [
             AuthMiddleware::class => static function (ContainerInterface $container) {
                 return new AuthMiddleware(
-                    $container->get(FormAuthAuthHandler::class),
+                    $container->get(FormAuthHandler::class),
                     $container->get(ResponseFactoryInterface::class),
                     $container->get(LoggerInterface::class)
                 );
             },
-            FormAuthAuthHandler::class => static function (ContainerInterface $container) {
-                return new FormAuthAuthHandler(
+            FormAuthHandler::class => static function (ContainerInterface $container) {
+                return new FormAuthHandler(
                     $container->get(UserProviderInterface::class),
                     $container->get(SessionStorageInterface::class),
                     [

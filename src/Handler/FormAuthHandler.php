@@ -5,6 +5,7 @@ namespace Michel\Auth\Handler;
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
 use Michel\Auth\Exception\InvalidCredentialsException;
+use Michel\Auth\Exception\LogoutException;
 use Michel\Auth\Exception\UserNotFoundException;
 use Michel\Auth\PasswordAuthenticatedUserInterface;
 use Michel\Auth\UserInterface;
@@ -16,7 +17,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterface
+class FormAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterface
 {
     public const AUTHENTICATION_ERROR = '_form.last_error';
     public const LAST_USERNAME = '_form.last_username';
@@ -24,6 +25,7 @@ class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerIn
     private UserProviderInterface $userProvider;
     private SessionStorageInterface $sessionStorage;
     private string $loginPath;
+    private string $logoutPath;
     private string $loginKey;
     private string $passwordKey;
     private string $targetPath;
@@ -44,6 +46,7 @@ class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerIn
 
         $optionResolver = new OptionsResolver([
             Option::string('login_path', '/login')->min(1),
+            Option::string('logout_path', '/logout')->min(1),
             Option::string('login_key', 'login')->min(1),
             Option::string('password_key', 'password')->min(1),
             Option::string('target_path', '/')->min(1),
@@ -54,6 +57,7 @@ class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerIn
 
         $options = $optionResolver->resolve($options);
         $this->loginPath = '/'.ltrim($options['login_path'], '/');
+        $this->logoutPath = '/'.ltrim($options['logout_path'], '/');
         $this->loginKey = $options['login_key'];
         $this->passwordKey = $options['password_key'];
         $this->targetPath = '/'.ltrim($options['target_path'], '/');
@@ -67,16 +71,21 @@ class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerIn
      */
     public function authenticate(ServerRequestInterface $request): ?AuthIdentity
     {
+        $path = $request->getUri()->getPath();
+        $method = $request->getMethod();
+
+        if ($path === $this->logoutPath) {
+            $this->sessionStorage->remove('user_identifier');
+            throw new LogoutException('User logged out.');
+        }
+
         if ($this->sessionStorage->has('user_identifier')) {
             $identifier = $this->sessionStorage->get('user_identifier');
             $user = $this->userProvider->findByIdentifier($identifier);
             if ($user instanceof UserInterface) {
-                return new AuthIdentity($user,  false);
+                return new AuthIdentity($user,  $path === $this->loginPath);
             }
         }
-
-        $path = $request->getUri()->getPath();
-        $method = $request->getMethod();
 
         if ($path === $this->loginPath && $method === 'GET') {
             return null;
@@ -124,7 +133,11 @@ class FormAuthAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerIn
 
     public function onFailure(ServerRequestInterface $request, ResponseFactoryInterface $responseFactory, ?AuthenticationException $exception = null): ResponseInterface
     {
-        if ($exception) {
+        if ($exception instanceof LogoutException) {
+            return $responseFactory->createResponse(302)->withHeader('Location', $this->loginPath);
+        }
+
+        if ($exception && !empty($exception->getMessage())) {
             $this->sessionStorage->put(self::AUTHENTICATION_ERROR, $exception->getMessage());
             $request = $request->withAttribute(self::AUTHENTICATION_ERROR, $exception->getMessage());
         }
