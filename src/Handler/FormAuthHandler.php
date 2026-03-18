@@ -72,7 +72,6 @@ class FormAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterf
     public function authenticate(ServerRequestInterface $request): ?AuthIdentity
     {
         $path = $request->getUri()->getPath();
-        $method = $request->getMethod();
 
         if ($path === $this->logoutPath) {
             $this->sessionStorage->remove('user_identifier');
@@ -83,10 +82,11 @@ class FormAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterf
             $identifier = $this->sessionStorage->get('user_identifier');
             $user = $this->userProvider->findByIdentifier($identifier);
             if ($user instanceof UserInterface) {
-                return new AuthIdentity($user,  $path === $this->loginPath);
+                return new AuthIdentity($user,  false);
             }
         }
 
+        $method = $request->getMethod();
         if ($path === $this->loginPath && $method === 'GET') {
             return null;
         }

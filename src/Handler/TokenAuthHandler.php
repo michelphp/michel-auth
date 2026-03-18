@@ -45,6 +45,7 @@ class TokenAuthHandler implements AuthHandlerInterface
         if (empty($token)) {
             throw new AuthenticationException("Token is required.");
         }
+
         $user = $this->userProvider->findByToken($token);
         if (!$user instanceof UserInterface) {
             throw new InvalidCredentialsException("The provided API key is invalid.");

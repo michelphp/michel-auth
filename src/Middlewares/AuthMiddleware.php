@@ -14,7 +14,7 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
 
-final class AuthMiddleware implements MiddlewareInterface
+abstract class AuthMiddleware implements MiddlewareInterface
 {
     private AuthHandlerInterface $authHandler;
     private ResponseFactoryInterface $responseFactory;
