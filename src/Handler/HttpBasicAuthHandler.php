@@ -15,22 +15,25 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class HttpBasicAuthHandler implements AuthHandlerInterface
 {
-    private UserProviderInterface $userProvider;
-
+    private string $user;
+    private string $password;
     private string $realm;
     /**
      * @var callable|null
      */
     private $onFailure;
+
     public function __construct(
-        UserProviderInterface $userProvider,
-         string $realm = "Restricted Area",
+        string $user,
+        string $password,
+        string                $realm = "Restricted Area",
         callable              $onFailure = null
     )
     {
-        $this->userProvider = $userProvider;
-        $this->onFailure = $onFailure;
+        $this->user = $user;
+        $this->password = $password;
         $this->realm = $realm;
+        $this->onFailure = $onFailure;
     }
 
 
@@ -42,31 +45,28 @@ class HttpBasicAuthHandler implements AuthHandlerInterface
     public function authenticate(ServerRequestInterface $request): ?AuthIdentity
     {
         $authHeader = $request->getHeaderLine('Authorization');
+        if (empty($authHeader)) {
+            throw new AuthenticationException("Authentication required.");
+        }
+
         if (0 !== strpos(strtolower($authHeader), 'basic ')) {
-            return null;
+            throw new AuthenticationException("Only Basic authentication is allowed.");
         }
 
         $base64Credentials = substr($authHeader, 6);
         $credentials = base64_decode($base64Credentials);
         if (false === $credentials || false === strpos($credentials, ':')) {
-            throw new InvalidCredentialsException("Invalid Basic Auth format.");
+            throw new InvalidCredentialsException("Malformed credentials.");
         }
 
         [$login, $password] = explode(':', $credentials, 2);
         $login = trim($login);
-        /**
-         * @var PasswordAuthenticatedUserInterface|UserInterface $user
-         */
-        $user = $this->userProvider->findByIdentifier($login);
-        if (!$user instanceof UserInterface) {
-            throw new UserNotFoundException("User not found.");
+
+        if ($login !== $this->user || $password !== $this->password) {
+            throw new InvalidCredentialsException("Access denied.");
         }
 
-        if (!$user instanceof PasswordAuthenticatedUserInterface || !$this->userProvider->isPasswordValid($user, $password)) {
-            throw new InvalidCredentialsException("Invalid username or password.");
-        }
-
-        return new AuthIdentity($user, false);
+        return null;
     }
 
     public function onFailure(ServerRequestInterface $request, ResponseFactoryInterface $responseFactory, ?AuthenticationException $exception = null): ResponseInterface
@@ -75,8 +75,10 @@ class HttpBasicAuthHandler implements AuthHandlerInterface
             return ($this->onFailure)($request, $responseFactory, $exception);
         }
 
-        return $responseFactory->createResponse(401)
-            ->withHeader('WWW-Authenticate', sprintf('Basic realm="%s"', $this->realm))
+        $response = $responseFactory->createResponse(401);
+        return $response
+            ->withHeader('WWW-Authenticate', sprintf('Basic realm="%s", charset="UTF-8"', $this->realm))
+            ->withHeader('Content-Type', 'text/plain')
             ->withHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
     }
 }

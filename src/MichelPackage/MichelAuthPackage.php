@@ -65,7 +65,8 @@ class MichelAuthPackage implements PackageInterface
             },
             HttpBasicAuthHandler::class => static function (ContainerInterface $container) {
                 return new HttpBasicAuthHandler(
-                    $container->get(UserProviderInterface::class),
+                    $container->get('auth.basic.user'),
+                    $container->get('auth.basic.password'),
                     $container->get('auth.http.basic.realm'),
                     $container->get('auth.http.basic.on_failure')
                 );
@@ -85,8 +86,10 @@ class MichelAuthPackage implements PackageInterface
             'auth.token.header_name' => 'X-Api-Key',
             'auth.token.on_failure' => null,
 
+            'auth.basic.user' => '',
+            'auth.basic.password' => '',
             'auth.http.basic.realm' => 'Restricted Area',
-            'auth.http_basic.on_failure' => null
+            'auth.http.basic.on_failure' => null
         ];
     }
 

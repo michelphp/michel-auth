@@ -7,6 +7,7 @@ use Michel\Auth\Exception\AuthenticationException;
 use Michel\Auth\Handler\AuthHandlerInterface;
 use Michel\Auth\Handler\StatefulAuthHandlerInterface;
 use Michel\Auth\Helper\IpHelper;
+use Michel\Auth\UserInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -34,6 +35,9 @@ abstract class AuthMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $handlerName = get_class($this->authHandler);
+        if ($request->getAttribute('user') instanceof UserInterface) {
+            return $handler->handle($request);
+        }
 
         try {
             $authIdentity = $this->authHandler->authenticate($request);
