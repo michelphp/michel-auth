@@ -1,6 +1,6 @@
 <?php
 
-namespace Michel\Auth\Handler;
+namespace Michel\Auth\Handler\Authentication;
 
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
@@ -12,7 +12,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class TokenAuthHandler implements AuthHandlerInterface
+final class UserTokenAuthHandler implements AuthHandlerInterface
 {
     private UserProviderInterface $userProvider;
 

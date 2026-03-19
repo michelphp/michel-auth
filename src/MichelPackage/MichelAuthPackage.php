@@ -3,12 +3,13 @@
 namespace Michel\Auth\MichelPackage;
 
 use Michel\Auth\Command\AuthPasswordHashCommand;
-use Michel\Auth\Handler\FormAuthHandler;
-use Michel\Auth\Handler\HttpBasicAuthHandler;
-use Michel\Auth\Handler\TokenAuthHandler;
-use Michel\Auth\Middlewares\FormAuthMiddleware;
-use Michel\Auth\Middlewares\HttpBasicAuthMiddleware;
-use Michel\Auth\Middlewares\TokenAuthMiddleware;
+use Michel\Auth\Handler\Authentication\UserFormAuthHandler;
+use Michel\Auth\Handler\Authentication\UserTokenAuthHandler;
+use Michel\Auth\Handler\Guard\TokenGuardHandler;
+use Michel\Auth\Handler\Guard\HttpBasicGuardHandler;
+use Michel\Auth\Middlewares\Authentication\UserFormAuthMiddleware;
+use Michel\Auth\Middlewares\Authentication\UserTokenAuthMiddleware;
+use Michel\Auth\Middlewares\Guard\HttpBasicGuardMiddleware;
 use Michel\Auth\UserProviderInterface;
 use Michel\Package\PackageInterface;
 use Michel\Session\Storage\SessionStorageInterface;
@@ -22,29 +23,29 @@ class MichelAuthPackage implements PackageInterface
     public function getDefinitions(): array
     {
         return [
-            FormAuthMiddleware::class => static function (ContainerInterface $container) {
-                return new FormAuthMiddleware(
-                    $container->get(FormAuthHandler::class),
+            UserFormAuthMiddleware::class => static function (ContainerInterface $container) {
+                return new UserFormAuthMiddleware(
+                    $container->get(UserFormAuthHandler::class),
                     $container->get(ResponseFactoryInterface::class),
                     $container->get(LoggerInterface::class)
                 );
             },
-            TokenAuthMiddleware::class => static function (ContainerInterface $container) {
-                return new TokenAuthMiddleware(
-                    $container->get(TokenAuthHandler::class),
+            UserTokenAuthMiddleware::class => static function (ContainerInterface $container) {
+                return new UserTokenAuthMiddleware(
+                    $container->get(UserTokenAuthHandler::class),
                     $container->get(ResponseFactoryInterface::class),
                     $container->get(LoggerInterface::class)
                 );
             },
-            HttpBasicAuthMiddleware::class => static function (ContainerInterface $container) {
-                return new HttpBasicAuthMiddleware(
-                    $container->get(HttpBasicAuthHandler::class),
+            HttpBasicGuardMiddleware::class => static function (ContainerInterface $container) {
+                return new HttpBasicGuardMiddleware(
+                    $container->get(HttpBasicGuardHandler::class),
                     $container->get(ResponseFactoryInterface::class),
                     $container->get(LoggerInterface::class)
                 );
             },
-            FormAuthHandler::class => static function (ContainerInterface $container) {
-                return new FormAuthHandler(
+            UserFormAuthHandler::class => static function (ContainerInterface $container) {
+                return new UserFormAuthHandler(
                     $container->get(UserProviderInterface::class),
                     $container->get(SessionStorageInterface::class),
                     [
@@ -56,19 +57,26 @@ class MichelAuthPackage implements PackageInterface
                     ]
                 );
             },
-            TokenAuthHandler::class => static function (ContainerInterface $container) {
-                return new TokenAuthHandler(
+            UserTokenAuthHandler::class => static function (ContainerInterface $container) {
+                return new UserTokenAuthHandler(
                     $container->get(UserProviderInterface::class),
                     $container->get('auth.token.header_name'),
                     $container->get('auth.token.on_failure')
                 );
             },
-            HttpBasicAuthHandler::class => static function (ContainerInterface $container) {
-                return new HttpBasicAuthHandler(
-                    $container->get('auth.basic.user'),
-                    $container->get('auth.basic.password'),
-                    $container->get('auth.http.basic.realm'),
-                    $container->get('auth.http.basic.on_failure')
+            HttpBasicGuardHandler::class => static function (ContainerInterface $container) {
+                return new HttpBasicGuardHandler(
+                    $container->get('guard.basic.user'),
+                    $container->get('guard.basic.password'),
+                    $container->get('guard.basic.realm'),
+                    $container->get('guard.http.basic.on_failure')
+                );
+            },
+            TokenGuardHandler::class => static function (ContainerInterface $container) {
+                return new TokenGuardHandler(
+                    $container->get('guard.token.secret'),
+                    $container->get('guard.token.header_name'),
+                    $container->get('guard.token.on_failure')
                 );
             }
         ];
@@ -83,13 +91,17 @@ class MichelAuthPackage implements PackageInterface
             'auth.form.password_key' => '_password',
             'auth.form.on_failure' => null,
 
-            'auth.token.header_name' => 'X-Api-Key',
+            'auth.token.header_name' => 'X-AUTH-TOKEN',
             'auth.token.on_failure' => null,
 
-            'auth.basic.user' => '',
-            'auth.basic.password' => '',
-            'auth.http.basic.realm' => 'Restricted Area',
-            'auth.http.basic.on_failure' => null
+            'guard.basic.user' => '',
+            'guard.basic.password' => '',
+            'guard.basic.realm' => 'Restricted Area',
+            'guard.basic.on_failure' => null,
+
+            'guard.token.secret'      => '',
+            'guard.token.header_name' => 'X-API-KEY',
+            'guard.token.on_failure'  => null,
         ];
     }
 

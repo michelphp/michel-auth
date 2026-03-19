@@ -1,19 +1,16 @@
 <?php
 
-namespace Michel\Auth\Handler;
+namespace Michel\Auth\Handler\Guard;
 
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
 use Michel\Auth\Exception\InvalidCredentialsException;
 use Michel\Auth\Exception\UserNotFoundException;
-use Michel\Auth\PasswordAuthenticatedUserInterface;
-use Michel\Auth\UserInterface;
-use Michel\Auth\UserProviderInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class HttpBasicAuthHandler implements AuthHandlerInterface
+class HttpBasicGuardHandler implements GuardHandlerInterface
 {
     private string $user;
     private string $password;
@@ -42,7 +39,7 @@ class HttpBasicAuthHandler implements AuthHandlerInterface
      * @throws UserNotFoundException
      * @throws InvalidCredentialsException
      */
-    public function authenticate(ServerRequestInterface $request): ?AuthIdentity
+    public function check(ServerRequestInterface $request): void
     {
         $authHeader = $request->getHeaderLine('Authorization');
         if (empty($authHeader)) {
@@ -66,7 +63,6 @@ class HttpBasicAuthHandler implements AuthHandlerInterface
             throw new InvalidCredentialsException("Access denied.");
         }
 
-        return null;
     }
 
     public function onFailure(ServerRequestInterface $request, ResponseFactoryInterface $responseFactory, ?AuthenticationException $exception = null): ResponseInterface

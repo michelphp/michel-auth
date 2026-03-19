@@ -33,13 +33,12 @@ Then, create a provider implementing `Michel\Auth\UserProviderInterface` to fetc
 Set up form authentication for your web application.
 
 ```php
-use Michel\Auth\Handler\FormAuthHandler;
-use Michel\Auth\Middlewares\AuthMiddleware;
+use Michel\Auth\Handler\Authentication\UserFormAuthHandler;use Michel\Auth\Middlewares\Authentication\AuthMiddleware;
 
 // $userProvider = new YourUserProvider();
 // $sessionStorage = new YourSessionStorage();
 
-$formHandler = new FormAuthHandler($userProvider, $sessionStorage, [
+$formHandler = new UserFormAuthHandler($userProvider, $sessionStorage, [
     'login_path' => '/login',
     'login_key' => 'email',
     'password_key' => 'password',
@@ -54,10 +53,9 @@ $authMiddleware = new AuthMiddleware($formHandler, $responseFactory, $logger);
 Ideal for stateless APIs using header tokens.
 
 ```php
-use Michel\Auth\Handler\TokenAuthHandler;
-use Michel\Auth\Middlewares\AuthMiddleware;
+use Michel\Auth\Handler\Authentication\UserTokenAuthHandler;use Michel\Auth\Middlewares\Authentication\AuthMiddleware;
 
-$tokenHandler = new TokenAuthHandler($userProvider, 'Authorization');
+$tokenHandler = new UserTokenAuthHandler($userProvider, 'Authorization');
 
 $authMiddleware = new AuthMiddleware($tokenHandler, $responseFactory, $logger);
 // Add $authMiddleware to your API routes

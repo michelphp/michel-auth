@@ -1,6 +1,6 @@
 <?php
 
-namespace Michel\Auth\Handler;
+namespace Michel\Auth\Handler\Authentication;
 
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;

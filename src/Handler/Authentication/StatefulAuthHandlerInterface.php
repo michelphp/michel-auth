@@ -1,8 +1,7 @@
 <?php
 
-namespace Michel\Auth\Handler;
+namespace Michel\Auth\Handler\Authentication;
 
-use Michel\Auth\Exception\AuthenticationException;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

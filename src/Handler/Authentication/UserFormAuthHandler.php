@@ -1,6 +1,6 @@
 <?php
 
-namespace Michel\Auth\Handler;
+namespace Michel\Auth\Handler\Authentication;
 
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
@@ -17,7 +17,7 @@ use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class FormAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterface
+final class UserFormAuthHandler implements AuthHandlerInterface, StatefulAuthHandlerInterface
 {
     public const AUTHENTICATION_ERROR = '_form.last_error';
     public const LAST_USERNAME = '_form.last_username';

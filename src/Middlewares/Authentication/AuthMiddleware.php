@@ -1,11 +1,11 @@
 <?php
 
-namespace Michel\Auth\Middlewares;
+namespace Michel\Auth\Middlewares\Authentication;
 
 use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
-use Michel\Auth\Handler\AuthHandlerInterface;
-use Michel\Auth\Handler\StatefulAuthHandlerInterface;
+use Michel\Auth\Handler\Authentication\AuthHandlerInterface;
+use Michel\Auth\Handler\Authentication\StatefulAuthHandlerInterface;
 use Michel\Auth\Helper\IpHelper;
 use Michel\Auth\UserInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -22,9 +22,9 @@ abstract class AuthMiddleware implements MiddlewareInterface
     private ?LoggerInterface $logger;
 
     public function __construct(
-        AuthHandlerInterface $authHandler,
+        AuthHandlerInterface     $authHandler,
         ResponseFactoryInterface $responseFactory,
-        LoggerInterface $logger = null
+        LoggerInterface          $logger = null
     )
     {
         $this->authHandler = $authHandler;
@@ -34,11 +34,11 @@ abstract class AuthMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $handlerName = get_class($this->authHandler);
         if ($request->getAttribute('user') instanceof UserInterface) {
             return $handler->handle($request);
         }
 
+        $handlerName = get_class($this->authHandler);
         try {
             $authIdentity = $this->authHandler->authenticate($request);
             if (!$authIdentity instanceof AuthIdentity) {
