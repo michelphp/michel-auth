@@ -69,7 +69,7 @@ class MichelAuthPackage implements PackageInterface
                     $container->get('guard.basic.user'),
                     $container->get('guard.basic.password'),
                     $container->get('guard.basic.realm'),
-                    $container->get('guard.http.basic.on_failure')
+                    $container->get('guard.basic.on_failure')
                 );
             },
             TokenGuardHandler::class => static function (ContainerInterface $container) {
