@@ -2,6 +2,8 @@
 
 namespace Michel\Auth;
 
+use Psr\Http\Message\ServerRequestInterface;
+
 interface UserProviderInterface
 {
     public function findByIdentifier(string $identifier): ?UserInterface;
@@ -9,4 +11,5 @@ interface UserProviderInterface
     public function isPasswordValid(PasswordAuthenticatedUserInterface $user, string $plainPassword): bool;
     public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newPlainPassword): void;
     public function hashPassword(string $plainPassword): string;
+    public function validateContext(UserInterface $user, array $context): void;
 }

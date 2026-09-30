@@ -2,13 +2,9 @@
 
 namespace Michel\Auth\Middlewares\Guard;
 
-use Michel\Auth\AuthIdentity;
 use Michel\Auth\Exception\AuthenticationException;
-use Michel\Auth\Handler\Authentication\AuthHandlerInterface;
-use Michel\Auth\Handler\Authentication\StatefulAuthHandlerInterface;
 use Michel\Auth\Handler\Guard\GuardHandlerInterface;
 use Michel\Auth\Helper\IpHelper;
-use Michel\Auth\UserInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -23,7 +19,7 @@ abstract class GuardMiddleware implements MiddlewareInterface
     private ?LoggerInterface $logger;
 
     public function __construct(
-        GuardHandlerInterface     $guardHandler,
+        GuardHandlerInterface    $guardHandler,
         ResponseFactoryInterface $responseFactory,
         LoggerInterface          $logger = null
     )
@@ -35,15 +31,12 @@ abstract class GuardMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $handlerName = get_class($this->guardHandler);
-        if ($request->getAttribute('user') instanceof UserInterface) {
-            return $handler->handle($request);
-        }
 
         try {
+            $handlerName = get_class($this->guardHandler);
             $this->guardHandler->check($request);
             return $handler->handle($request);
-        }catch (AuthenticationException $exception) {
+        } catch (AuthenticationException $exception) {
             if ($this->logger) {
                 $this->logger->log(
                     'warning',
@@ -51,8 +44,8 @@ abstract class GuardMiddleware implements MiddlewareInterface
                     [
                         'handler' => $handlerName,
                         'message' => $exception->getMessage(),
-                        'ip'      => IpHelper::getIpFromRequest($request),
-                        'path'    => $request->getUri()->getPath(),
+                        'ip' => IpHelper::getIpFromRequest($request),
+                        'path' => $request->getUri()->getPath(),
                     ]
                 );
             }

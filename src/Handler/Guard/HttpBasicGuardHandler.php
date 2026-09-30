@@ -72,6 +72,7 @@ class HttpBasicGuardHandler implements GuardHandlerInterface
         }
 
         $response = $responseFactory->createResponse(401);
+        $response->getBody()->write('401 Unauthorized: Authentication is required to access this resource.');
         return $response
             ->withHeader('WWW-Authenticate', sprintf('Basic realm="%s", charset="UTF-8"', $this->realm))
             ->withHeader('Content-Type', 'text/plain')

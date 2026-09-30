@@ -21,6 +21,8 @@ final class UserFormAuthHandler implements AuthHandlerInterface, StatefulAuthHan
 {
     public const AUTHENTICATION_ERROR = '_form.last_error';
     public const LAST_USERNAME = '_form.last_username';
+    private const SESSION_IDENTIFIER = '_auth_user_identifier';
+    private const SESSION_CONTEXT = '_auth_context';
 
     private UserProviderInterface $userProvider;
     private SessionStorageInterface $sessionStorage;
@@ -74,14 +76,17 @@ final class UserFormAuthHandler implements AuthHandlerInterface, StatefulAuthHan
         $path = $request->getUri()->getPath();
 
         if ($path === $this->logoutPath) {
-            $this->sessionStorage->remove('user_identifier');
+            $this->sessionStorage->remove(self::SESSION_IDENTIFIER);
+            $this->sessionStorage->remove(self::SESSION_CONTEXT);
             throw new LogoutException('User logged out.');
         }
 
-        if ($this->sessionStorage->has('user_identifier')) {
-            $identifier = $this->sessionStorage->get('user_identifier');
+        if ($this->sessionStorage->has(self::SESSION_IDENTIFIER)) {
+            $identifier = (string) $this->sessionStorage->get(self::SESSION_IDENTIFIER);
             $user = $this->userProvider->findByIdentifier($identifier);
             if ($user instanceof UserInterface) {
+                $context = (array) $this->sessionStorage->get(self::SESSION_CONTEXT, []);
+                $this->userProvider->validateContext($user, $context);
                 return new AuthIdentity($user,  false);
             }
         }
@@ -99,10 +104,11 @@ final class UserFormAuthHandler implements AuthHandlerInterface, StatefulAuthHan
             throw new AuthenticationException('Login form must be submitted using POST.');
         }
 
-        list($login, $password) = self::extractCredentials($request, $this->loginKey, $this->passwordKey);
+        list($login, $password, $context) = self::extractCredentials($request, $this->loginKey, $this->passwordKey);
         if (empty($login) || empty($password)) {
             throw new InvalidCredentialsException("Credentials cannot be empty.");
         }
+
         $this->sessionStorage->put(self::LAST_USERNAME, $login);
 
         /**
@@ -121,7 +127,10 @@ final class UserFormAuthHandler implements AuthHandlerInterface, StatefulAuthHan
             throw new InvalidCredentialsException("Invalid username or password.");
         }
 
-        $this->sessionStorage->put('user_identifier', $user->getUserIdentifier());
+        $this->userProvider->validateContext($user, $context);
+
+        $this->sessionStorage->put(self::SESSION_IDENTIFIER, $user->getUserIdentifier());
+        $this->sessionStorage->put(self::SESSION_CONTEXT, $context);
         return new AuthIdentity($user,  true);
     }
 
@@ -154,9 +163,11 @@ final class UserFormAuthHandler implements AuthHandlerInterface, StatefulAuthHan
         $data = $request->getParsedBody();
         $login = $data[$keyLogin] ?? '';
         $pass = $data[$keyPassword] ?? '';
+        unset($data[$keyPassword]);
         return [
             $login,
-            $pass
+            $pass,
+            $data
         ];
     }
 }
